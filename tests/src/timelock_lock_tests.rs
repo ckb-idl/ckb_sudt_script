@@ -192,7 +192,9 @@ fn test_witness_validation_passes_full_witness() {
 
     assert_eq!(validated[2].name, "extra");
     assert_eq!(validated[2].type_, "bytes");
-    assert!(!validated[2].required);
+    // The flat compatibility lock always encodes the length-prefixed extra
+    // field; an empty payload represents the no-extra case.
+    assert!(validated[2].required);
     assert_eq!(validated[2].value, DecodedValue::Bytes(extra.to_vec()));
 }
 

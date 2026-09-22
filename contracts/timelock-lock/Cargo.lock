@@ -165,26 +165,12 @@ dependencies = [
 ]
 
 [[package]]
-name = "ckb-idl-export"
-version = "0.1.0"
-source = "git+https://github.com/OWK50GA/ckb-idl-derive?branch=dev#0716283730e6a1c7e468b796ec12ad6bf0a6df95"
-dependencies = [
- "ckb-idl-types 0.1.0 (git+https://github.com/OWK50GA/ckb-idl-derive?branch=dev)",
- "serde_json",
-]
-
-[[package]]
 name = "ckb-idl-types"
 version = "0.1.0"
 source = "git+https://github.com/ckb-idl/ckb-idl-derive?branch=dev#0716283730e6a1c7e468b796ec12ad6bf0a6df95"
 dependencies = [
  "ckb-std",
 ]
-
-[[package]]
-name = "ckb-idl-types"
-version = "0.1.0"
-source = "git+https://github.com/OWK50GA/ckb-idl-derive?branch=dev#0716283730e6a1c7e468b796ec12ad6bf0a6df95"
 
 [[package]]
 name = "ckb-jsonrpc-types"
@@ -862,8 +848,7 @@ version = "0.1.0"
 dependencies = [
  "ckb-hash 0.202.0",
  "ckb-idl-derive",
- "ckb-idl-export",
- "ckb-idl-types 0.1.0 (git+https://github.com/ckb-idl/ckb-idl-derive?branch=dev)",
+ "ckb-idl-types",
  "ckb-std",
 ]
 
