@@ -155,6 +155,7 @@ dependencies = [
 [[package]]
 name = "ckb-idl-derive"
 version = "0.1.0"
+source = "git+https://github.com/ckb-idl/ckb-idl-derive?branch=dev#0716283730e6a1c7e468b796ec12ad6bf0a6df95"
 dependencies = [
  "ckb-std",
  "proc-macro2",
@@ -166,6 +167,7 @@ dependencies = [
 [[package]]
 name = "ckb-idl-types"
 version = "0.1.0"
+source = "git+https://github.com/ckb-idl/ckb-idl-derive?branch=dev#0716283730e6a1c7e468b796ec12ad6bf0a6df95"
 dependencies = [
  "ckb-std",
 ]

@@ -7,8 +7,8 @@ edition = "2024"
 
 [dependencies]
 ckb-std = "1.1"
-ckb-idl-derive = { path = "../../../ckb-idl-derive" }
-ckb-idl-types = { path = "../../../ckb-idl-derive/ckb-idl-types", features = ["ckb-contract"] }
+ckb-idl-derive = { git = "https://github.com/ckb-idl/ckb-idl-derive", branch = "dev" }
+ckb-idl-types = { git = "https://github.com/ckb-idl/ckb-idl-derive", branch = "dev", features = ["ckb-contract"] }
 
 [features]
 library = []
