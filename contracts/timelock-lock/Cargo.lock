@@ -155,7 +155,6 @@ dependencies = [
 [[package]]
 name = "ckb-idl-derive"
 version = "0.1.0"
-source = "git+https://github.com/OWK50GA/ckb-idl-derive?branch=refactor%2Fout-dir#7c040dc9fc0587cb2da63e6162713a3b414576c2"
 dependencies = [
  "ckb-std",
  "proc-macro2",
@@ -165,9 +164,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "ckb-idl-export"
+version = "0.1.0"
+dependencies = [
+ "ckb-idl-types",
+ "serde_json",
+]
+
+[[package]]
 name = "ckb-idl-types"
 version = "0.1.0"
-source = "git+https://github.com/OWK50GA/ckb-idl-derive?branch=refactor%2Fout-dir#7c040dc9fc0587cb2da63e6162713a3b414576c2"
 dependencies = [
  "ckb-std",
 ]
@@ -848,6 +854,7 @@ version = "0.1.0"
 dependencies = [
  "ckb-hash 0.202.0",
  "ckb-idl-derive",
+ "ckb-idl-export",
  "ckb-idl-types",
  "ckb-std",
 ]
