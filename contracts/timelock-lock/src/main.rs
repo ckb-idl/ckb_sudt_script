@@ -3,17 +3,17 @@
 
 pub mod error;
 
-#[cfg(any(feature = "library", test))]
-extern crate alloc;
-
-use alloc::vec::Vec;
-
-use ckb_idl_derive::CkbWitness;
 use ckb_std::{
     ckb_constants::Source,
     ckb_types::{bytes::Bytes, prelude::*},
 };
 use error::Error;
+
+#[cfg(any(feature = "library", test))]
+extern crate alloc;
+
+use alloc::vec::Vec;
+use ckb_idl_derive::CkbWitness;
 
 #[cfg(not(any(feature = "library", test)))]
 ckb_std::entry!(program_entry);
@@ -36,21 +36,16 @@ ckb_std::default_alloc!(16384, 1258306, 64);
 ///   [33..65] blake2b-256 hash of expected `extra` payload (all zeros = skip check)
 #[derive(CkbWitness)]
 pub struct Witness {
-    /// 65-byte ECDSA signature (r || s || v) over the transaction hash.
-    #[witness(description = "secp256k1 ECDSA signature authorising the spend")]
+    #[witness(
+        type = "secp256k1_sig",
+        description = "secp256k1 ECDSA signature authorising the spend"
+    )]
     pub signature: [u8; 65],
 
-    /// Earliest timestamp (ms since Unix epoch) at which this cell may be spent.
-    /// Encoded as little-endian u64.
     #[witness(description = "Unix timestamp in milliseconds; cell cannot be spent before this")]
     pub unlock_after_ms: u64,
 
-    /// Optional auxiliary payload — Merkle proof, nonce, session token, etc.
-    /// When non-empty its hash must match args[33..65].
-    #[witness(
-        required = false,
-        description = "Optional auxiliary payload; hash must match commitment in args[33..65]"
-    )]
+    #[witness(description = "Auxiliary payload; hash must match commitment in args[33..65]")]
     pub extra: Vec<u8>,
 }
 

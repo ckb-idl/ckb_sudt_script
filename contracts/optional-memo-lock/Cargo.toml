@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "timelock-lock"
+name = "optional-memo-lock"
 version = "0.1.0"
 edition = "2024"
 

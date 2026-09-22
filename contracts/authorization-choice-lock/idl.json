@@ -1,0 +1,1 @@
+{"encoding":{"optional_fields":"trailing_exhaustion","variable_length_prefix":{"endian":"little","width":4}},"idl_version":"0.1","witness":[{"description":"Selected authorization mechanism","name":"authorization","required":true,"type":"union"}]}

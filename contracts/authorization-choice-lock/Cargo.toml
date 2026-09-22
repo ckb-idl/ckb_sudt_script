@@ -1,7 +1,7 @@
 [workspace]
 
 [package]
-name = "timelock-lock"
+name = "authorization-choice-lock"
 version = "0.1.0"
 edition = "2024"
 
@@ -14,3 +14,10 @@ ckb-idl-types = { git = "https://github.com/ckb-idl/ckb-idl-derive", branch = "d
 [features]
 library = []
 native-simulator = ["library", "ckb-std/native-simulator"]
+
+[dev-dependencies]
+ckb-idl-export = {
+  git = "https://github.com/OWK50GA/ckb-idl-derive",
+  branch = "dev",
+  package = "ckb-idl-export"
+}

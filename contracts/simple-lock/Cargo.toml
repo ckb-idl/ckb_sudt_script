@@ -8,8 +8,8 @@ edition = "2024"
 [dependencies]
 ckb-std = "1.1"
 ckb-hash = { version = "0.202", default-features = false, features = ["ckb-contract"] }
-ckb-idl-derive = { git = "https://github.com/OWK50GA/ckb-idl-derive", branch = "refactor/out-dir" }
-ckb-idl-types = { git = "https://github.com/OWK50GA/ckb-idl-derive", branch = "refactor/out-dir", features = ["ckb-contract"] }
+ckb-idl-derive = { git = "https://github.com/ckb-idl/ckb-idl-derive", branch = "dev" }
+ckb-idl-types = { git = "https://github.com/ckb-idl/ckb-idl-derive", branch = "dev", features = ["ckb-contract"] }
 
 [features]
 library = []
