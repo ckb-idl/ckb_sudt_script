@@ -1,1 +1,1 @@
-{"encoding":{"optional_fields":"trailing_exhaustion","variable_length_prefix":{"endian":"little","width":4}},"idl_version":"0.1","witness":[{"name":"signatures","required":true,"type":"vec_of_bytes_fixed_65"}]}
+{"idl_version":"0.1.0","interfaces":[{"encoding":{"id":"ckb-idl-linear-0.1.0"},"fields":[{"items":{"type":"bytes_fixed_65"},"name":"signatures","required":true,"type":"vector"}],"id":"lock_witness","kind":"witness_args.lock"}]}

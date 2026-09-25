@@ -37,11 +37,13 @@ fn load_timelock_idl() -> IdlDocument {
 
     let raw: serde_json::Value = serde_json::from_str(&json).expect("idl.json is not valid JSON");
 
+    // Adapt the 0.1.0 lock-witness interface for the current flat-only client.
     let witness_fields: Vec<WitnessField> =
-        serde_json::from_value(raw["witness"].clone()).expect("idl.json has no 'witness' array");
+        serde_json::from_value(raw["interfaces"][0]["fields"].clone())
+            .expect("idl.json has no witness_args.lock interface fields");
 
     IdlDocument {
-        idl_version: "1".to_string(),
+        idl_version: "0.1.0".to_string(),
         name: "timelock-lock".to_string(),
         witness: witness_fields,
         description: None,

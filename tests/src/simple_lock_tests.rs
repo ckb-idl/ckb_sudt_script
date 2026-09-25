@@ -30,16 +30,16 @@ fn load_simple_lock_idl() -> IdlDocument {
     let json = std::fs::read_to_string(idl_path)
         .expect("simple-lock idl.json not found — run `make build` first");
 
-    // The IDL on disk was written by ckb-idl-derive, which currently emits
-    // a subset of IdlDocument (no idl_version, name, signing). We deserialize
-    // into a minimal wrapper then promote it.
+    // ckb-idl-client is still flat-only, so adapt the 0.1.0 lock-witness
+    // interface fields into its legacy IdlDocument shape for PSCT coverage.
     let raw: serde_json::Value = serde_json::from_str(&json).expect("idl.json is not valid JSON");
 
     let witness_fields: Vec<WitnessField> =
-        serde_json::from_value(raw["witness"].clone()).expect("idl.json has no 'witness' array");
+        serde_json::from_value(raw["interfaces"][0]["fields"].clone())
+            .expect("idl.json has no witness_args.lock interface fields");
 
     IdlDocument {
-        idl_version: "1".to_string(),
+        idl_version: "0.1.0".to_string(),
         name: "simple-lock".to_string(),
         witness: witness_fields,
         description: None,

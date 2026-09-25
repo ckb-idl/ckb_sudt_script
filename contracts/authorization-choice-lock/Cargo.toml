@@ -17,7 +17,7 @@ native-simulator = ["library", "ckb-std/native-simulator"]
 
 [dev-dependencies]
 ckb-idl-export = {
-  git = "https://github.com/OWK50GA/ckb-idl-derive",
+  git = "https://github.com/ckb-idl/ckb-idl-derive",
   branch = "dev",
   package = "ckb-idl-export"
 }

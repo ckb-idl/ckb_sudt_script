@@ -8,6 +8,7 @@ pub struct PreimageAuthorization {
 
 #[derive(CkbInnerWitness)]
 pub struct SignatureAuthorization {
+    #[witness(type = "secp256k1_sig")]
     pub signature: [u8; 65],
 }
 
