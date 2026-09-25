@@ -1,1 +1,1 @@
-{"encoding":{"optional_fields":"trailing_exhaustion","variable_length_prefix":{"endian":"little","width":4}},"idl_version":"0.1","witness":[{"description":"Preimage whose blake2b-256 hash must match the hash in script args","name":"preimage","required":true,"type":"bytes"}]}
+{"idl_version":"0.1.0","interfaces":[{"encoding":{"id":"ckb-idl-linear-0.1.0"},"fields":[{"description":"Preimage whose blake2b-256 hash must match the hash in script args","name":"preimage","required":true,"type":"bytes"}],"id":"lock_witness","kind":"witness_args.lock"}]}
