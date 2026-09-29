@@ -18,6 +18,22 @@ fn main() -> anyhow::Result<()> {
         "deploy-sudt" => {
             deploy_and_mint_sudt()?;
         }
+        "deploy-bundle" => {
+            let values: Vec<_> = args.collect();
+            anyhow::ensure!(
+                values.len() == 3,
+                "usage: deploy-bundle <bound-executable> <frozen-idl> <manifest>"
+            );
+            let outpoint = deploy_script::deploy_bound_bundle(
+                &config.ckb_rpc,
+                &config.address,
+                config.secret_key()?,
+                &values[0],
+                &values[1],
+                &values[2],
+            )?;
+            println!("Code outpoint tx: {:#x}", outpoint.tx_hash());
+        }
 
         // ── simple-lock ──────────────────────────────────────────────────────
         "deploy-simple-lock" => {
