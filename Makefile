@@ -98,13 +98,16 @@ clean:
 
 # IDL 0.1 bundle workflow. CONTRACT must name an IDL-enabled contract with an
 # examples/export_idl.rs entry point. CKB_IDL may be an absolute path in local CI.
-CKB_IDL ?= $(TOP)/../ckb-idl-cli/target/release/ckb-idl
+CKB_IDL_DEFAULT := $(TOP)/../ckb-idl-cli/target/release/ckb-idl
+CKB_IDL ?= $(CKB_IDL_DEFAULT)
 IDL_ARTIFACT_DIR ?= artifacts
 IDL_DIST_DIR ?= dist
 IDL_CONTRACTS := authorization-choice-lock hash-commitment-lock multisig-threshold-lock optional-memo-lock simple-lock timelock-lock
 
 ckb-idl:
-	cargo build --release --locked --manifest-path $(TOP)/../ckb-idl-cli/Cargo.toml
+	@if [ "$(CKB_IDL)" = "$(CKB_IDL_DEFAULT)" ]; then \
+		cargo build --release --locked --manifest-path $(TOP)/../ckb-idl-cli/Cargo.toml; \
+	fi
 
 export-idl:
 	@test -n "$(CONTRACT)" || (echo "CONTRACT is required"; exit 2)
@@ -124,6 +127,8 @@ test-bound: package
 	$(CKB_IDL) verify --executable $(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT) \
 		--idl $(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT).idl.json \
 		--manifest $(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT).binding.json
+	CKB_IDL_BOUND_SIMPLE_LOCK=$(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT) \
+		cargo +1.95.0 test --package tests test_bound_simple_lock_executes
 
 # Package every IDL-enabled reference contract. Existing output directories are
 # intentionally not removed; choose a fresh IDL_DIST_DIR for a new run.
@@ -134,7 +139,7 @@ package-all:
 	done
 
 deploy: package
-	cargo run -p deployer -- deploy-bundle \
+	CKB_IDL="$(CKB_IDL)" cargo run -p deployer -- deploy-bundle \
 		$(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT) \
 		$(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT).idl.json \
 		$(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT).binding.json
