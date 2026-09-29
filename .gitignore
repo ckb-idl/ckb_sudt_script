@@ -9,3 +9,5 @@
 # idl.json
 
 .env
+dist
+artifacts

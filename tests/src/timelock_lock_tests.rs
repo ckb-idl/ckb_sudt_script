@@ -17,7 +17,7 @@
 ///   - SignatureInvalid (11): signature is all zeros
 ///   - Encoding (4):          extra hash mismatch when commitment in args
 ///   - Success:               non-zero sig, timestamp passed, extra matches commitment
-use ckb_idl_client::{DecodedValue, IdlClient, IdlDocument, WitnessField};
+use ckb_idl_client::{DecodedValue, IdlClient, WitnessField};
 use ckb_testtool::builtin::ALWAYS_SUCCESS;
 use ckb_testtool::ckb_hash::blake2b_256;
 use ckb_testtool::ckb_types::{bytes::Bytes, core::TransactionBuilder, packed::*, prelude::*};
@@ -27,29 +27,21 @@ const MAX_CYCLES: u64 = 10_000_000;
 
 // ── IDL loading ──────────────────────────────────────────────────────────────
 
-fn load_timelock_idl() -> IdlDocument {
+fn load_timelock_idl() -> Vec<WitnessField> {
     let idl_path = concat!(
         env!("CARGO_MANIFEST_DIR"),
         "/../contracts/timelock-lock/idl.json"
     );
-    let json = std::fs::read_to_string(idl_path)
-        .expect("timelock-lock idl.json not found — run `make build` first");
+    let json =
+        std::fs::read(idl_path).expect("timelock-lock idl.json not found — run `make build` first");
 
-    let raw: serde_json::Value = serde_json::from_str(&json).expect("idl.json is not valid JSON");
-
-    // Adapt the 0.1.0 lock-witness interface for the current flat-only client.
-    let witness_fields: Vec<WitnessField> =
-        serde_json::from_value(raw["interfaces"][0]["fields"].clone())
-            .expect("idl.json has no witness_args.lock interface fields");
-
-    IdlDocument {
-        idl_version: "0.1.0".to_string(),
-        name: "timelock-lock".to_string(),
-        witness: witness_fields,
-        description: None,
-        script_version: None,
-        signing: None,
-    }
+    let document = IdlClient::parse_document(&json).expect("canonical timelock-lock IDL");
+    document.validate().expect("valid timelock-lock IDL");
+    document
+        .lock_witness()
+        .expect("lock witness interface")
+        .fields
+        .clone()
 }
 
 // ── Wire encoding ─────────────────────────────────────────────────────────────
@@ -161,10 +153,10 @@ fn run_tx(
 #[test]
 fn test_idl_has_three_fields() {
     let idl = load_timelock_idl();
-    assert_eq!(idl.witness.len(), 3);
-    assert_eq!(idl.witness[0].name, "signature");
-    assert_eq!(idl.witness[1].name, "unlock_after_ms");
-    assert_eq!(idl.witness[2].name, "extra");
+    assert_eq!(idl.len(), 3);
+    assert_eq!(idl[0].name, "signature");
+    assert_eq!(idl[1].name, "unlock_after_ms");
+    assert_eq!(idl[2].name, "extra");
 }
 
 #[test]
@@ -178,25 +170,25 @@ fn test_witness_validation_passes_full_witness() {
 
     let client = IdlClient::new();
     let validated = client
-        .validate_witness_bytes(&idl.witness, &wire)
+        .validate_witness_bytes(&idl, &wire)
         .expect("full witness should pass structural validation");
 
-    assert_eq!(validated.len(), 3);
-    assert_eq!(validated[0].name, "signature");
-    assert_eq!(validated[0].type_, "secp256k1_sig");
-    assert!(validated[0].required);
+    assert_eq!(idl.len(), 3);
+    assert_eq!(idl[0].name, "signature");
+    assert_eq!(idl[0].type_, "secp256k1_sig".to_string());
+    assert!(idl[0].required);
     assert_eq!(validated[0].value, DecodedValue::Bytes(sig.to_vec()));
 
-    assert_eq!(validated[1].name, "unlock_after_ms");
-    assert_eq!(validated[1].type_, "uint64");
-    assert!(validated[1].required);
+    assert_eq!(idl[1].name, "unlock_after_ms");
+    assert_eq!(idl[1].type_, "uint64");
+    assert!(idl[1].required);
     assert_eq!(validated[1].value, DecodedValue::U64(ts));
 
-    assert_eq!(validated[2].name, "extra");
-    assert_eq!(validated[2].type_, "bytes");
+    assert_eq!(idl[2].name, "extra");
+    assert_eq!(idl[2].type_, "bytes");
     // The flat compatibility lock always encodes the length-prefixed extra
     // field; an empty payload represents the no-extra case.
-    assert!(validated[2].required);
+    assert!(idl[2].required);
     assert_eq!(validated[2].value, DecodedValue::Bytes(extra.to_vec()));
 }
 
@@ -207,7 +199,7 @@ fn test_witness_validation_passes_empty_extra() {
 
     let client = IdlClient::new();
     let validated = client
-        .validate_witness_bytes(&idl.witness, &wire)
+        .validate_witness_bytes(&idl, &wire)
         .expect("witness with empty extra should pass");
     assert_eq!(validated[2].value, DecodedValue::Bytes(vec![]));
 }
@@ -218,11 +210,9 @@ fn test_witness_validation_fails_missing_timestamp() {
     let buf = vec![0x01u8; 65]; // only signature, no timestamp
 
     let client = IdlClient::new();
-    let err = client
-        .validate_witness_bytes(&idl.witness, &buf)
-        .unwrap_err();
+    let err = client.validate_witness_bytes(&idl, &buf).unwrap_err();
     assert!(
-        matches!(err, ckb_idl_client::IdlError::FieldTooShort { ref field, .. } if field == "unlock_after_ms"),
+        matches!(err, ckb_idl_client::IdlError::FieldTooShort { path: ref field, .. } if field == "/unlock_after_ms"),
         "expected FieldTooShort for unlock_after_ms, got {:?}",
         err
     );
@@ -235,15 +225,13 @@ fn test_witness_validation_fails_truncated_timestamp() {
     buf.extend_from_slice(&[0x00, 0x01, 0x02]); // only 3 of 8 timestamp bytes
 
     let client = IdlClient::new();
-    let err = client
-        .validate_witness_bytes(&idl.witness, &buf)
-        .unwrap_err();
+    let err = client.validate_witness_bytes(&idl, &buf).unwrap_err();
     assert!(
         matches!(err, ckb_idl_client::IdlError::FieldTooShort {
-            ref field,
+            path: ref field,
             expected: 8,
             got: 3,
-        } if field == "unlock_after_ms"),
+        } if field == "/unlock_after_ms"),
         "expected FieldTooShort {{ field: unlock_after_ms, expected: 8, got: 3 }}, got {:?}",
         err
     );
@@ -257,15 +245,13 @@ fn test_witness_validation_fails_truncated_extra_prefix() {
     buf.extend_from_slice(&[0x00, 0x01]); // only 2 of 4 prefix bytes
 
     let client = IdlClient::new();
-    let err = client
-        .validate_witness_bytes(&idl.witness, &buf)
-        .unwrap_err();
+    let err = client.validate_witness_bytes(&idl, &buf).unwrap_err();
     assert!(
         matches!(err, ckb_idl_client::IdlError::FieldTooShort {
-            ref field,
+            path: ref field,
             expected: 4,
             got: 2,
-        } if field == "extra"),
+        } if field == "/extra"),
         "expected FieldTooShort {{ field: extra, expected: 4, got: 2 }}, got {:?}",
         err
     );
@@ -278,9 +264,7 @@ fn test_witness_validation_fails_trailing_bytes() {
     wire.extend_from_slice(b"extra"); // 5 trailing bytes
 
     let client = IdlClient::new();
-    let err = client
-        .validate_witness_bytes(&idl.witness, &wire)
-        .unwrap_err();
+    let err = client.validate_witness_bytes(&idl, &wire).unwrap_err();
     assert!(
         matches!(
             err,
@@ -307,12 +291,12 @@ fn test_psct_validate_then_execute_timelock_passes() {
 
     let client = IdlClient::new();
     let validated = client
-        .validate_witness_bytes(&idl.witness, &wire)
+        .validate_witness_bytes(&idl, &wire)
         .expect("witness should pass PSCT validation");
 
     println!("PSCT validation passed for timelock-lock. Decoded fields:");
     for f in &validated {
-        println!("  {} ({}): {:?}", f.name, f.type_, f.value);
+        println!("  {}: {:?}", f.name, f.value);
     }
 
     let args = build_args(None);
@@ -334,7 +318,7 @@ fn test_psct_passes_but_vm_rejects_timelock_not_met() {
 
     let client = IdlClient::new();
     client
-        .validate_witness_bytes(&idl.witness, &wire)
+        .validate_witness_bytes(&idl, &wire)
         .expect("PSCT should pass: structure is valid even if timelock not met");
 
     let args = build_args(None);
@@ -357,7 +341,7 @@ fn test_psct_passes_but_vm_rejects_zero_signature() {
 
     let client = IdlClient::new();
     client
-        .validate_witness_bytes(&idl.witness, &wire)
+        .validate_witness_bytes(&idl, &wire)
         .expect("PSCT should pass: zero sig is structurally valid");
 
     let args = build_args(None);
@@ -382,7 +366,7 @@ fn test_psct_validate_then_execute_with_extra_payload() {
 
     let client = IdlClient::new();
     let validated = client
-        .validate_witness_bytes(&idl.witness, &wire)
+        .validate_witness_bytes(&idl, &wire)
         .expect("witness with extra should pass PSCT");
 
     assert_eq!(
@@ -410,7 +394,7 @@ fn test_psct_passes_but_vm_rejects_extra_hash_mismatch() {
 
     let client = IdlClient::new();
     client
-        .validate_witness_bytes(&idl.witness, &wire)
+        .validate_witness_bytes(&idl, &wire)
         .expect("PSCT should pass: structure valid even with wrong hash");
 
     let args = build_args(Some(commitment));

@@ -2,34 +2,23 @@
 #![cfg_attr(not(test), no_main)]
 
 pub mod error;
+mod witness;
 
 #[cfg(any(feature = "library", test))]
 extern crate alloc;
 
-use alloc::vec::Vec;
-
 use ckb_hash::blake2b_256;
-use ckb_idl_derive::CkbWitness;
 use ckb_std::{
     ckb_constants::Source,
     ckb_types::{bytes::Bytes, prelude::*},
 };
 use error::Error;
+use witness::Witness;
 
 #[cfg(not(any(feature = "library", test)))]
 ckb_std::entry!(program_entry);
 #[cfg(not(any(feature = "library", test)))]
 ckb_std::default_alloc!(16384, 1258306, 64);
-
-/// Witness for the simple-lock script.
-///
-/// The lock unlocks a cell if blake2b_256(preimage) equals the 32-byte hash
-/// stored in the script args. The preimage is provided by the spender.
-#[derive(CkbWitness)]
-pub struct Witness {
-    #[witness(description = "Preimage whose blake2b-256 hash must match the hash in script args")]
-    pub preimage: Vec<u8>,
-}
 
 pub fn program_entry() -> i8 {
     match check_hash() {

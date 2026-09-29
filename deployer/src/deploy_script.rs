@@ -1,4 +1,4 @@
-use std::{collections::HashMap, println, str::FromStr, vec};
+use std::{collections::HashMap, println, process::Command, str::FromStr, vec};
 
 use ckb_hash::blake2b_256;
 use ckb_jsonrpc_types::Either;
@@ -118,6 +118,53 @@ pub fn deploy_script(
     println!("Code cell Outpoint: {}:0x0", tx_hash);
 
     Ok(OutPoint::new(tx_hash.pack(), 0))
+}
+
+/// Verifies and deploys a prepared Binding Trailer 1 bundle without modifying it.
+pub fn deploy_bound_bundle(
+    ckb_rpc: &str,
+    deployer_address: &str,
+    sender_key: SecretKey,
+    executable_path: &str,
+    idl_path: &str,
+    manifest_path: &str,
+) -> anyhow::Result<OutPoint> {
+    let ckb_idl = std::env::var("CKB_IDL").unwrap_or_else(|_| "ckb-idl".into());
+    let status = Command::new(ckb_idl)
+        .args([
+            "verify",
+            "--executable",
+            executable_path,
+            "--idl",
+            idl_path,
+            "--manifest",
+            manifest_path,
+        ])
+        .status()?;
+    anyhow::ensure!(status.success(), "ckb-idl verify rejected the bundle");
+
+    let manifest: serde_json::Value = serde_json::from_slice(&std::fs::read(manifest_path)?)?;
+    let expected = manifest["bound_code_data_ckb_hash"]
+        .as_str()
+        .ok_or_else(|| anyhow::anyhow!("manifest lacks bound_code_data_ckb_hash"))?;
+    let outpoint = deploy_script(ckb_rpc, deployer_address, sender_key, executable_path, None)?;
+    let client = CkbRpcClient::new(ckb_rpc);
+    let (_, deployed) = fetch_code_cell_data(&client, &outpoint)?;
+    let actual = format!("0x{}", hex::encode(blake2b_256(&deployed)));
+    anyhow::ensure!(
+        actual == expected,
+        "deployed data hash differs from binding manifest"
+    );
+    let receipt = serde_json::json!({
+        "format": "ckb-idl-deployment-receipt-0.1",
+        "network": std::env::var("CKB_NETWORK").unwrap_or_else(|_| "unspecified".into()),
+        "outpoint": { "tx_hash": format!("{:#x}", outpoint.tx_hash()), "index": 0 },
+        "code_hash": actual,
+        "hash_type": "data1",
+        "idl_sha256": manifest["idl_sha256"],
+    });
+    println!("deployment_receipt={}", serde_json::to_string(&receipt)?);
+    Ok(outpoint)
 }
 
 pub fn mint_tokens(

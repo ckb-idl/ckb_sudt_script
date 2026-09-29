@@ -5,12 +5,12 @@
 extern crate alloc;
 
 mod error;
+mod witness;
 
-use alloc::vec::Vec;
 use ckb_hash::blake2b_256;
-use ckb_idl_derive::CkbWitness;
 use ckb_std::{ckb_constants::Source, ckb_types::{bytes::Bytes, prelude::*}};
 use error::Error;
+use witness::Witness;
 
 #[cfg(not(any(feature = "library", test)))]
 ckb_std::entry!(program_entry);
@@ -18,13 +18,6 @@ ckb_std::entry!(program_entry);
 ckb_std::default_alloc!(16384, 1258306, 64);
 
 /// The trailing optional field exercises the current exhaustion-based option encoding.
-#[derive(CkbWitness)]
-pub struct Witness {
-    pub proof: Vec<u8>,
-    #[witness(required = false, description = "Optional wallet-visible memo")]
-    pub memo: Option<Vec<u8>>,
-}
-
 pub fn program_entry() -> i8 { match verify() { Ok(()) => 0, Err(error) => error as i8 } }
 
 fn verify() -> Result<(), Error> {

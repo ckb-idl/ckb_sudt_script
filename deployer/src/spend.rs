@@ -176,7 +176,7 @@ pub fn verify_and_validate(
     code_cell_data: &[u8],
     idl_path: &str,
     wire_bytes: &[u8],
-) -> anyhow::Result<Vec<ckb_idl_client::ValidatedField>> {
+) -> anyhow::Result<ckb_idl_client::WitnessObject> {
     let idl_json_bytes = std::fs::read(idl_path)
         .map_err(|e| anyhow::anyhow!("failed to read IDL file at {idl_path}: {e}"))?;
 
@@ -186,16 +186,13 @@ pub fn verify_and_validate(
         .map_err(|e| anyhow::anyhow!("IDL commitment verification failed: {e}"))?;
     println!("IDL commitment verified — IDL is authentic.");
 
-    let idl_doc: ckb_idl_client::IdlDocument = serde_json::from_slice(&idl_json_bytes)
-        .map_err(|e| anyhow::anyhow!("failed to parse IDL JSON: {e}"))?;
-
     let validated = idl_client
-        .validate_witness_bytes(&idl_doc.witness, wire_bytes)
+        .validate_witness_bytes(idl_client.lock_witness_requirements(code_hash)?, wire_bytes)
         .map_err(|e| anyhow::anyhow!("witness validation failed: {e}"))?;
 
     println!("Witness structurally valid. Decoded fields:");
     for f in &validated {
-        println!("  {} ({}): {:?}", f.name, f.type_, f.value);
+        println!("  {}: {:?}", f.name, f.value);
     }
 
     Ok(validated)
