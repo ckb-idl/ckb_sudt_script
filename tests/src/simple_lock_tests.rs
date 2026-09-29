@@ -27,11 +27,15 @@ fn load_simple_lock_idl() -> Vec<WitnessField> {
         env!("CARGO_MANIFEST_DIR"),
         "/../contracts/simple-lock/idl.json"
     );
-    let json = std::fs::read(idl_path)
-        .expect("simple-lock idl.json not found — run `make build` first");
+    let json =
+        std::fs::read(idl_path).expect("simple-lock idl.json not found — run `make build` first");
     let document = IdlClient::parse_document(&json).expect("canonical simple-lock IDL");
     document.validate().expect("valid simple-lock IDL");
-    document.lock_witness().expect("lock witness interface").fields.clone()
+    document
+        .lock_witness()
+        .expect("lock witness interface")
+        .fields
+        .clone()
 }
 
 /// Encode a witness for simple-lock using the ckb-idl-derive wire format.
@@ -237,12 +241,17 @@ fn test_bound_simple_lock_executes() {
     let mut context = Context::default();
     let bound_out_point = context.deploy_cell(
         std::fs::read(bound_path)
-            .expect("bound simple-lock is missing — run make package-all IDL_DIST_DIR=dist/task15-run")
+            .expect(
+                "bound simple-lock is missing — run make package-all IDL_DIST_DIR=dist/task15-run",
+            )
             .into(),
     );
     let preimage = b"bound trailer preimage";
     let lock_script = context
-        .build_script(&bound_out_point, Bytes::from(blake2b_256(preimage).to_vec()))
+        .build_script(
+            &bound_out_point,
+            Bytes::from(blake2b_256(preimage).to_vec()),
+        )
         .expect("bound lock script");
     let locked_cell = context.create_cell(
         CellOutput::new_builder()
@@ -256,8 +265,17 @@ fn test_bound_simple_lock_executes() {
         .lock(Some(Bytes::from(encode_simple_lock_witness(preimage))).pack())
         .build();
     let tx = TransactionBuilder::default()
-        .input(CellInput::new_builder().previous_output(locked_cell).build())
-        .output(CellOutput::new_builder().capacity(1000u64).lock(output_lock).build())
+        .input(
+            CellInput::new_builder()
+                .previous_output(locked_cell)
+                .build(),
+        )
+        .output(
+            CellOutput::new_builder()
+                .capacity(1000u64)
+                .lock(output_lock)
+                .build(),
+        )
         .output_data(Bytes::new().pack())
         .witness(witness_args.as_bytes().pack())
         .build();

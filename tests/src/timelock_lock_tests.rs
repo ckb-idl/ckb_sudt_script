@@ -32,12 +32,16 @@ fn load_timelock_idl() -> Vec<WitnessField> {
         env!("CARGO_MANIFEST_DIR"),
         "/../contracts/timelock-lock/idl.json"
     );
-    let json = std::fs::read(idl_path)
-        .expect("timelock-lock idl.json not found — run `make build` first");
+    let json =
+        std::fs::read(idl_path).expect("timelock-lock idl.json not found — run `make build` first");
 
     let document = IdlClient::parse_document(&json).expect("canonical timelock-lock IDL");
     document.validate().expect("valid timelock-lock IDL");
-    document.lock_witness().expect("lock witness interface").fields.clone()
+    document
+        .lock_witness()
+        .expect("lock witness interface")
+        .fields
+        .clone()
 }
 
 // ── Wire encoding ─────────────────────────────────────────────────────────────
@@ -206,9 +210,7 @@ fn test_witness_validation_fails_missing_timestamp() {
     let buf = vec![0x01u8; 65]; // only signature, no timestamp
 
     let client = IdlClient::new();
-    let err = client
-        .validate_witness_bytes(&idl, &buf)
-        .unwrap_err();
+    let err = client.validate_witness_bytes(&idl, &buf).unwrap_err();
     assert!(
         matches!(err, ckb_idl_client::IdlError::FieldTooShort { path: ref field, .. } if field == "/unlock_after_ms"),
         "expected FieldTooShort for unlock_after_ms, got {:?}",
@@ -223,9 +225,7 @@ fn test_witness_validation_fails_truncated_timestamp() {
     buf.extend_from_slice(&[0x00, 0x01, 0x02]); // only 3 of 8 timestamp bytes
 
     let client = IdlClient::new();
-    let err = client
-        .validate_witness_bytes(&idl, &buf)
-        .unwrap_err();
+    let err = client.validate_witness_bytes(&idl, &buf).unwrap_err();
     assert!(
         matches!(err, ckb_idl_client::IdlError::FieldTooShort {
             path: ref field,
@@ -245,9 +245,7 @@ fn test_witness_validation_fails_truncated_extra_prefix() {
     buf.extend_from_slice(&[0x00, 0x01]); // only 2 of 4 prefix bytes
 
     let client = IdlClient::new();
-    let err = client
-        .validate_witness_bytes(&idl, &buf)
-        .unwrap_err();
+    let err = client.validate_witness_bytes(&idl, &buf).unwrap_err();
     assert!(
         matches!(err, ckb_idl_client::IdlError::FieldTooShort {
             path: ref field,
@@ -266,9 +264,7 @@ fn test_witness_validation_fails_trailing_bytes() {
     wire.extend_from_slice(b"extra"); // 5 trailing bytes
 
     let client = IdlClient::new();
-    let err = client
-        .validate_witness_bytes(&idl, &wire)
-        .unwrap_err();
+    let err = client.validate_witness_bytes(&idl, &wire).unwrap_err();
     assert!(
         matches!(
             err,
