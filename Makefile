@@ -56,7 +56,9 @@ build:
 		done; \
 	else \
 		$(MAKE) -e -C contracts/$(CONTRACT) build; \
-		cargo build -p $(CONTRACT)-sim; \
+		if [ -d native-simulators/$(CONTRACT)-sim ]; then \
+			cargo build -p $(CONTRACT)-sim; \
+		fi; \
 	fi;
 
 # Run a single make task for a specific contract. For example:
@@ -93,6 +95,49 @@ cargo:
 clean:
 	rm -rf build
 	cargo clean
+
+# IDL 0.1 bundle workflow. CONTRACT must name an IDL-enabled contract with an
+# examples/export_idl.rs entry point. CKB_IDL may be an absolute path in local CI.
+CKB_IDL ?= $(TOP)/../ckb-idl-cli/target/release/ckb-idl
+IDL_ARTIFACT_DIR ?= artifacts
+IDL_DIST_DIR ?= dist
+IDL_CONTRACTS := authorization-choice-lock hash-commitment-lock multisig-threshold-lock optional-memo-lock simple-lock timelock-lock
+
+ckb-idl:
+	cargo build --release --locked --manifest-path $(TOP)/../ckb-idl-cli/Cargo.toml
+
+export-idl:
+	@test -n "$(CONTRACT)" || (echo "CONTRACT is required"; exit 2)
+	mkdir -p $(IDL_ARTIFACT_DIR)/$(CONTRACT)
+	cargo run --manifest-path contracts/$(CONTRACT)/Cargo.toml --example export_idl -- \
+		$(IDL_ARTIFACT_DIR)/$(CONTRACT)/$(CONTRACT).idl.json
+
+package: ckb-idl
+	@test -n "$(CONTRACT)" || (echo "CONTRACT is required"; exit 2)
+	$(MAKE) build CONTRACT=$(CONTRACT)
+	$(MAKE) export-idl CONTRACT=$(CONTRACT)
+	$(CKB_IDL) bind --executable $(BUILD_DIR)/$(CONTRACT) \
+		--idl $(IDL_ARTIFACT_DIR)/$(CONTRACT)/$(CONTRACT).idl.json \
+		--out-dir $(IDL_DIST_DIR)/$(CONTRACT)
+
+test-bound: package
+	$(CKB_IDL) verify --executable $(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT) \
+		--idl $(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT).idl.json \
+		--manifest $(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT).binding.json
+
+# Package every IDL-enabled reference contract. Existing output directories are
+# intentionally not removed; choose a fresh IDL_DIST_DIR for a new run.
+package-all:
+	@set -eu; \
+	for contract in $(IDL_CONTRACTS); do \
+		$(MAKE) package CONTRACT=$$contract CLEAN_BUILD_DIR_FIRST=false; \
+	done
+
+deploy: package
+	cargo run -p deployer -- deploy-bundle \
+		$(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT) \
+		$(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT).idl.json \
+		$(IDL_DIST_DIR)/$(CONTRACT)/$(CONTRACT).binding.json
 
 TEMPLATE_TYPE := --git
 TEMPLATE_REPO := https://github.com/cryptape/ckb-script-templates

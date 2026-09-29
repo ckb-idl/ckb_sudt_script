@@ -1,5 +1,23 @@
 # ckb-lock-script
 
+## IDL-enabled deployment
+
+IDL-enabled contracts are packaged before deployment. The deployer must receive
+the bound executable, frozen IDL, and binding manifest; it never appends an IDL
+digest itself.
+
+```text
+make package CONTRACT=<name>
+make package-all IDL_DIST_DIR=<name>
+make test-bound CONTRACT=<name>
+make deploy CONTRACT=<name>
+```
+
+`make package` builds the contract, exports canonical IDL, and binds it using
+the local `ckb-idl` binary. `make deploy` verifies the bundle, submits the bound
+bytes unchanged, checks the deployed data hash against the manifest, and emits
+a separate JSON deployment receipt.
+
 A research workspace demonstrating the CKB IDL system — a convention for CKB lock scripts to publish a machine-readable interface description alongside their deployed binary, enabling wallets and tooling to validate witness encoding before submitting transactions.
 
 The workspace contains two IDL-enabled lock scripts, a sUDT type script, a deployer binary, and an integration test suite.
