@@ -5,11 +5,11 @@
 extern crate alloc;
 
 mod error;
+mod witness;
 
-use alloc::vec::Vec;
-use ckb_idl_derive::CkbWitness;
 use ckb_std::{ckb_constants::Source, ckb_types::{bytes::Bytes, prelude::*}};
 use error::Error;
+use witness::Witness;
 
 #[cfg(not(any(feature = "library", test)))]
 ckb_std::entry!(program_entry);
@@ -17,9 +17,6 @@ ckb_std::entry!(program_entry);
 ckb_std::default_alloc!(16384, 1258306, 64);
 
 /// A typed-vector exercise. Args contain a little-endian u16 threshold.
-#[derive(CkbWitness)]
-pub struct Witness { pub signatures: Vec<[u8; 65]> }
-
 pub fn program_entry() -> i8 { match verify() { Ok(()) => 0, Err(error) => error as i8 } }
 
 fn verify() -> Result<(), Error> {

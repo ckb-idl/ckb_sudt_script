@@ -5,12 +5,12 @@
 extern crate alloc;
 
 mod error;
+mod witness;
 
-use alloc::vec::Vec;
 use ckb_hash::blake2b_256;
-use ckb_idl_derive::CkbWitness;
 use ckb_std::{ckb_constants::Source, ckb_types::{bytes::Bytes, prelude::*}};
 use error::Error;
+use witness::Witness;
 
 #[cfg(not(any(feature = "library", test)))]
 ckb_std::entry!(program_entry);
@@ -18,13 +18,6 @@ ckb_std::entry!(program_entry);
 ckb_std::default_alloc!(16384, 1258306, 64);
 
 /// Exercises structural fixed bytes plus a wallet-facing semantic label.
-#[derive(CkbWitness)]
-pub struct Witness {
-    #[witness(type = "blake2b_hash", description = "Commitment to the supplied preimage")]
-    pub commitment: [u8; 32],
-    pub preimage: Vec<u8>,
-}
-
 pub fn program_entry() -> i8 {
     match verify() { Ok(()) => 0, Err(error) => error as i8 }
 }

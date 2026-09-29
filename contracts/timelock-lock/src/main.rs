@@ -2,6 +2,7 @@
 #![cfg_attr(not(test), no_main)]
 
 pub mod error;
+mod witness;
 
 use ckb_std::{
     ckb_constants::Source,
@@ -12,8 +13,7 @@ use error::Error;
 #[cfg(any(feature = "library", test))]
 extern crate alloc;
 
-use alloc::vec::Vec;
-use ckb_idl_derive::CkbWitness;
+use witness::Witness;
 
 #[cfg(not(any(feature = "library", test)))]
 ckb_std::entry!(program_entry);
@@ -34,21 +34,6 @@ ckb_std::default_alloc!(16384, 1258306, 64);
 /// Args layout (65 bytes total):
 ///   [0..33]  compressed secp256k1 public key
 ///   [33..65] blake2b-256 hash of expected `extra` payload (all zeros = skip check)
-#[derive(CkbWitness)]
-pub struct Witness {
-    #[witness(
-        type = "secp256k1_sig",
-        description = "secp256k1 ECDSA signature authorising the spend"
-    )]
-    pub signature: [u8; 65],
-
-    #[witness(description = "Unix timestamp in milliseconds; cell cannot be spent before this")]
-    pub unlock_after_ms: u64,
-
-    #[witness(description = "Auxiliary payload; hash must match commitment in args[33..65]")]
-    pub extra: Vec<u8>,
-}
-
 pub fn program_entry() -> i8 {
     match check_timelock() {
         Ok(()) => 0,
