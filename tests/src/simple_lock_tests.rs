@@ -237,6 +237,14 @@ fn test_bound_simple_lock_executes() {
     let Ok(bound_path) = std::env::var("CKB_IDL_BOUND_SIMPLE_LOCK") else {
         return;
     };
+    let bound_path = std::path::PathBuf::from(bound_path);
+    let bound_path = if bound_path.is_absolute() {
+        bound_path
+    } else {
+        std::path::Path::new(env!("CARGO_MANIFEST_DIR"))
+            .join("..")
+            .join(bound_path)
+    };
     let mut context = Context::default();
     let bound_out_point = context.deploy_cell(
         std::fs::read(&bound_path)

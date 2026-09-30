@@ -8,16 +8,12 @@ edition = "2024"
 [dependencies]
 ckb-std = "1.1"
 ckb-hash = { version = "0.202", default-features = false, features = ["ckb-contract"] }
-ckb-idl-derive = { git = "https://github.com/ckb-idl/ckb-idl-derive", rev = "cadb4d363cb4b70043af23599ace143c21811cb6" }
-ckb-idl-types = { git = "https://github.com/ckb-idl/ckb-idl-derive", rev = "cadb4d363cb4b70043af23599ace143c21811cb6", features = ["ckb-contract"] }
+ckb-idl-derive = "0.1.0"
+ckb-idl-types = { version = "0.1.0", features = ["ckb-contract"] }
 
 [features]
 library = []
 native-simulator = ["library", "ckb-std/native-simulator"]
 
 [dev-dependencies]
-ckb-idl-export = {
-  git = "https://github.com/ckb-idl/ckb-idl-derive",
-  rev = "cadb4d363cb4b70043af23599ace143c21811cb6",
-  package = "ckb-idl-export"
-}
+ckb-idl-export = "0.1.0"

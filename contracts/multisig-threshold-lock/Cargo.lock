@@ -146,7 +146,8 @@ dependencies = [
 [[package]]
 name = "ckb-idl-derive"
 version = "0.1.0"
-source = "git+https://github.com/ckb-idl/ckb-idl-derive?rev=cadb4d363cb4b70043af23599ace143c21811cb6#cadb4d363cb4b70043af23599ace143c21811cb6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "e9037935e2538a64eb40eabcf4d2fa57e25187a238a516da8e458253c7b09d60"
 dependencies = [
  "ckb-std",
  "proc-macro2",
@@ -159,7 +160,8 @@ dependencies = [
 [[package]]
 name = "ckb-idl-export"
 version = "0.1.0"
-source = "git+https://github.com/ckb-idl/ckb-idl-derive?rev=cadb4d363cb4b70043af23599ace143c21811cb6#cadb4d363cb4b70043af23599ace143c21811cb6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "5685e885488b4614fa675fc8f85ccc206214e76910778d7ceb69e3a7434523de"
 dependencies = [
  "ckb-idl-types",
  "serde_json",
@@ -169,7 +171,8 @@ dependencies = [
 [[package]]
 name = "ckb-idl-types"
 version = "0.1.0"
-source = "git+https://github.com/ckb-idl/ckb-idl-derive?rev=cadb4d363cb4b70043af23599ace143c21811cb6#cadb4d363cb4b70043af23599ace143c21811cb6"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "a14a2330e94d46a61d3751d10ee472bbb930301876729c47b6449d9743dba4d8"
 dependencies = [
  "ckb-std",
 ]

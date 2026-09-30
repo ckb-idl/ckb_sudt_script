@@ -525,7 +525,8 @@ dependencies = [
 [[package]]
 name = "ckb-idl-client"
 version = "0.1.0"
-source = "git+https://github.com/OWK50GA/ckb-idl-client?rev=1d1203e4b9921972571378866344653c58c41b09#1d1203e4b9921972571378866344653c58c41b09"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "ccec25c3e9129ce73ea36257f08142dded09c881e67e5a9ad1fbf49d1ccf2a5c"
 dependencies = [
  "blake2b_simd",
  "hex",
